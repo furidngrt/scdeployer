@@ -1,4 +1,3 @@
-// app/components/Deployer.js
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
@@ -7,9 +6,15 @@ const Deployer = ({ contract, provider, signer }) => {
   const [contractAddress, setContractAddress] = useState('');
   const [goal, setGoal] = useState('');
   const [duration, setDuration] = useState('');
+  const [tokenName, setTokenName] = useState('');
+  const [tokenSymbol, setTokenSymbol] = useState('');
+  const [totalSupply, setTotalSupply] = useState('');
   const [networkName, setNetworkName] = useState('');
   const [explorerLink, setExplorerLink] = useState('');
   const [hasGoalAndDuration, setHasGoalAndDuration] = useState(false);
+  const [isTokenContract, setIsTokenContract] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (contract && contract.abi && contract.bytecode) {
@@ -23,10 +28,15 @@ const Deployer = ({ contract, provider, signer }) => {
           item.type === 'constructor' &&
           item.inputs.some((input) => input.name === '_duration')
       );
+      const isToken = contract.abi.some(
+        (item) => item.name === 'totalSupply' && item.outputs.some((output) => output.internalType === 'uint256')
+      );
 
       setHasGoalAndDuration(hasGoal && hasDuration);
+      setIsTokenContract(isToken);
     } else {
       setHasGoalAndDuration(false);
+      setIsTokenContract(false);
     }
 
     if (provider) {
@@ -88,13 +98,24 @@ const Deployer = ({ contract, provider, signer }) => {
       return;
     }
 
+    if (isTokenContract && (!tokenName || !tokenSymbol || !totalSupply)) {
+      alert('Please enter token name, symbol, and total supply.');
+      return;
+    }
+
     setDeploying(true);
 
     try {
       const factory = new ethers.ContractFactory(contract.abi, contract.bytecode, signer);
-      const contractInstance = hasGoalAndDuration
-        ? await factory.deploy(goal, duration)
-        : await factory.deploy();
+
+      let contractInstance;
+      if (isTokenContract) {
+        contractInstance = await factory.deploy(tokenName, tokenSymbol, totalSupply);
+      } else if (hasGoalAndDuration) {
+        contractInstance = await factory.deploy(goal, duration);
+      } else {
+        contractInstance = await factory.deploy();
+      }
 
       await contractInstance.deployed();
 
@@ -102,14 +123,15 @@ const Deployer = ({ contract, provider, signer }) => {
       alert(`Contract deployed at address: ${contractInstance.address} on ${networkName}`);
     } catch (error) {
       console.error("Deployment failed with error:", error);
-      alert(`Deployment failed: ${error.message}`);
+      setErrorMessage("Deployment failed or was rejected by the user.");
+      setShowErrorPopup(true);
     } finally {
       setDeploying(false);
     }
   };
 
   return (
-    <div className="p-4 bg-white rounded-xl shadow-md space-y-4">
+    <div className="relative p-4 bg-white rounded-xl shadow-md space-y-4">
       {hasGoalAndDuration && (
         <>
           <div>
@@ -118,7 +140,7 @@ const Deployer = ({ contract, provider, signer }) => {
               type="number"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
               placeholder="Enter goal amount"
             />
           </div>
@@ -128,8 +150,43 @@ const Deployer = ({ contract, provider, signer }) => {
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
               placeholder="Enter duration in seconds"
+            />
+          </div>
+        </>
+      )}
+
+      {isTokenContract && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Token Name</label>
+            <input
+              type="text"
+              value={tokenName}
+              onChange={(e) => setTokenName(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              placeholder="Enter token name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Token Symbol</label>
+            <input
+              type="text"
+              value={tokenSymbol}
+              onChange={(e) => setTokenSymbol(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              placeholder="Enter token symbol"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Total Supply</label>
+            <input
+              type="number"
+              value={totalSupply}
+              onChange={(e) => setTotalSupply(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              placeholder="Enter total supply"
             />
           </div>
         </>
@@ -138,14 +195,12 @@ const Deployer = ({ contract, provider, signer }) => {
       <button
         onClick={deployContract}
         disabled={deploying || !contract || !contract.bytecode}
-        className={`w-full py-2 px-3 rounded-lg text-white font-semibold text-sm ${
-          deploying ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
-        } transition-transform transform hover:scale-105 shadow-md flex justify-center items-center`}
+        className={`w-full py-2 px-4 bg-blue-200 text-blue-900 rounded-lg text-sm font-semibold transition-transform transform hover:scale-105 shadow-md flex justify-center items-center`}
       >
         {deploying ? (
           <>
             <svg
-              className="animate-spin h-4 w-4 text-white mr-2"
+              className="animate-spin h-4 w-4 text-blue-900 mr-2"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -186,6 +241,24 @@ const Deployer = ({ contract, provider, signer }) => {
             </a>{" "}
             on {networkName}
           </p>
+        </div>
+      )}
+
+      {showErrorPopup && (
+        <div className="absolute top-0 left-0 right-0 flex justify-center p-4">
+          <div className="bg-red-200 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{errorMessage}</span>
+            <button
+              onClick={() => setShowErrorPopup(false)}
+              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            >
+              <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <title>Close</title>
+                <path d="M14.348 5.652a.5.5 0 00-.708 0L10 9.293 6.36 5.652a.5.5 0 00-.707.708l3.64 3.64-3.64 3.64a.5.5 0 00.707.707l3.64-3.64 3.64 3.64a.5.5 0 00.708-.707l-3.64-3.64 3.64-3.64a.5.5 0 000-.708z" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
     </div>
