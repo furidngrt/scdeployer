@@ -5,11 +5,70 @@ import { ethers } from 'ethers';
 const Deployer = ({ contract, provider, signer }) => {
   const [deploying, setDeploying] = useState(false);
   const [contractAddress, setContractAddress] = useState('');
+  const [goal, setGoal] = useState('');
+  const [duration, setDuration] = useState('');
+  const [networkName, setNetworkName] = useState('');
+  const [explorerLink, setExplorerLink] = useState('');
+  const [hasGoalAndDuration, setHasGoalAndDuration] = useState(false);
 
   useEffect(() => {
-    console.log('Signer in Deployer:', signer);
-    console.log('Contract in Deployer:', contract);
-  }, [signer, contract]);
+    if (contract && contract.abi && contract.bytecode) {
+      const hasGoal = contract.abi.some(
+        (item) =>
+          item.type === 'constructor' &&
+          item.inputs.some((input) => input.name === '_goal')
+      );
+      const hasDuration = contract.abi.some(
+        (item) =>
+          item.type === 'constructor' &&
+          item.inputs.some((input) => input.name === '_duration')
+      );
+
+      setHasGoalAndDuration(hasGoal && hasDuration);
+    } else {
+      setHasGoalAndDuration(false);
+    }
+
+    if (provider) {
+      provider.getNetwork().then((network) => {
+        setNetworkName(network.name);
+
+        let explorerUrl;
+        const networkNameLower = network.name.toLowerCase();
+
+        switch (networkNameLower) {
+          case 'homestead': // Mainnet
+            explorerUrl = 'https://etherscan.io/address/';
+            break;
+          case 'ropsten':
+            explorerUrl = 'https://ropsten.etherscan.io/address/';
+            break;
+          case 'rinkeby':
+            explorerUrl = 'https://rinkeby.etherscan.io/address/';
+            break;
+          case 'sepolia':
+            explorerUrl = 'https://sepolia.etherscan.io/address/';
+            break;
+          case 'kovan':
+            explorerUrl = 'https://kovan.etherscan.io/address/';
+            break;
+          case 'beratrail': // Custom network example
+            explorerUrl = 'https://bartio.beratrail.io/address/';
+            break;
+          default:
+            if (networkNameLower.includes('mainnet')) {
+              explorerUrl = `https://etherscan.io/address/`;
+            } else if (networkNameLower.includes('testnet')) {
+              explorerUrl = `https://${networkNameLower}.etherscan.io/address/`;
+            } else {
+              explorerUrl = `https://explorer.${networkNameLower}.io/address/`;
+            }
+        }
+
+        setExplorerLink(explorerUrl);
+      });
+    }
+  }, [contract, provider]);
 
   const deployContract = async () => {
     if (!provider) {
@@ -17,30 +76,30 @@ const Deployer = ({ contract, provider, signer }) => {
       return;
     }
 
-    if (!signer || !contract) {
-      alert('Signer or contract data is missing.');
+    if (!signer || !contract || !contract.bytecode) {
+      alert('Signer, contract data, or bytecode is missing.');
       console.log('Signer:', signer);
       console.log('Contract:', contract);
+      return;
+    }
+
+    if (hasGoalAndDuration && (!goal || !duration)) {
+      alert('Please enter goal and duration.');
       return;
     }
 
     setDeploying(true);
 
     try {
-      console.log('Contract ABI:', contract.abi);
-      console.log('Contract Bytecode:', contract.bytecode);
-
-      console.log('Creating contract factory...');
       const factory = new ethers.ContractFactory(contract.abi, contract.bytecode, signer);
-
-      console.log('Deploying contract...');
-      const contractInstance = await factory.deploy();
+      const contractInstance = hasGoalAndDuration
+        ? await factory.deploy(goal, duration)
+        : await factory.deploy();
 
       await contractInstance.deployed();
 
-      console.log('Contract deployed at:', contractInstance.address);
       setContractAddress(contractInstance.address);
-      alert(`Contract deployed at address: ${contractInstance.address}`);
+      alert(`Contract deployed at address: ${contractInstance.address} on ${networkName}`);
     } catch (error) {
       console.error("Deployment failed with error:", error);
       alert(`Deployment failed: ${error.message}`);
@@ -50,30 +109,60 @@ const Deployer = ({ contract, provider, signer }) => {
   };
 
   return (
-    <div className="p-8 bg-gray-50 rounded-xl shadow-lg space-y-6 max-w-lg mx-auto">
+    <div className="p-4 bg-white rounded-xl shadow-md space-y-4">
+      {hasGoalAndDuration && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Goal</label>
+            <input
+              type="number"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="Enter goal amount"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Duration</label>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="Enter duration in seconds"
+            />
+          </div>
+        </>
+      )}
 
       <button
         onClick={deployContract}
-        disabled={deploying || !contract}
-        className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
-          deploying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-        } transition-transform transform hover:scale-105 shadow-lg`}
+        disabled={deploying || !contract || !contract.bytecode}
+        className={`w-full py-2 px-3 rounded-lg text-white font-semibold text-sm ${
+          deploying ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
+        } transition-transform transform hover:scale-105 shadow-md flex justify-center items-center`}
       >
         {deploying ? (
           <>
             <svg
-              className="animate-spin h-5 w-5 text-white inline-block mr-2"
+              className="animate-spin h-4 w-4 text-white mr-2"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor"
             >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
               <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v1m0 14v1m7-7h1m-14 0H4m1-5l1 1m12 12l1 1M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42"
-              />
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 2.042.602 3.944 1.635 5.518l2.365-1.227z"
+              ></path>
             </svg>
             Deploying...
           </>
@@ -83,10 +172,19 @@ const Deployer = ({ contract, provider, signer }) => {
       </button>
 
       {contractAddress && (
-        <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-800">Contract Deployed Successfully!</h3>
-          <p className="text-gray-700 mt-2">
-            Your contract has been deployed at: <span className="text-blue-600">{contractAddress}</span>
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+          <h3 className="text-sm font-semibold text-gray-800">Contract Deployed!</h3>
+          <p className="text-gray-700 break-words text-sm">
+            The contract has been deployed at:{" "}
+            <a
+              href={`${explorerLink}${contractAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {contractAddress}
+            </a>{" "}
+            on {networkName}
           </p>
         </div>
       )}
