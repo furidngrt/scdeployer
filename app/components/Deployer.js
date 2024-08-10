@@ -123,7 +123,9 @@ const Deployer = ({ contract, provider, signer }) => {
       alert(`Contract deployed at address: ${contractInstance.address} on ${networkName}`);
     } catch (error) {
       console.error("Deployment failed with error:", error);
-      setErrorMessage("Deployment failed or was rejected by the user.");
+      
+      // Display the specific error message
+      setErrorMessage(error.message);
       setShowErrorPopup(true);
     } finally {
       setDeploying(false);
