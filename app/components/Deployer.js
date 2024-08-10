@@ -9,10 +9,14 @@ const Deployer = ({ contract, provider, signer }) => {
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [totalSupply, setTotalSupply] = useState('');
+  const [nftName, setNftName] = useState('');
+  const [nftDescription, setNftDescription] = useState('');
+  const [nftImage, setNftImage] = useState(null);
   const [networkName, setNetworkName] = useState('');
   const [explorerLink, setExplorerLink] = useState('');
   const [hasGoalAndDuration, setHasGoalAndDuration] = useState(false);
   const [isTokenContract, setIsTokenContract] = useState(false);
+  const [isNftContract, setIsNftContract] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -31,12 +35,17 @@ const Deployer = ({ contract, provider, signer }) => {
       const isToken = contract.abi.some(
         (item) => item.name === 'totalSupply' && item.outputs.some((output) => output.internalType === 'uint256')
       );
+      const isNft = contract.abi.some(
+        (item) => item.name === 'createNFT' && item.inputs.some((input) => input.name === 'tokenURI')
+      );
 
       setHasGoalAndDuration(hasGoal && hasDuration);
       setIsTokenContract(isToken);
+      setIsNftContract(isNft);
     } else {
       setHasGoalAndDuration(false);
       setIsTokenContract(false);
+      setIsNftContract(false);
     }
 
     if (provider) {
@@ -62,17 +71,8 @@ const Deployer = ({ contract, provider, signer }) => {
           case 'kovan':
             explorerUrl = 'https://kovan.etherscan.io/address/';
             break;
-          case 'beratrail': // Custom network example
-            explorerUrl = 'https://bartio.beratrail.io/address/';
-            break;
           default:
-            if (networkNameLower.includes('mainnet')) {
-              explorerUrl = `https://etherscan.io/address/`;
-            } else if (networkNameLower.includes('testnet')) {
-              explorerUrl = `https://${networkNameLower}.etherscan.io/address/`;
-            } else {
-              explorerUrl = `https://explorer.${networkNameLower}.io/address/`;
-            }
+            explorerUrl = `https://${networkNameLower}.etherscan.io/address/`;
         }
 
         setExplorerLink(explorerUrl);
@@ -103,6 +103,11 @@ const Deployer = ({ contract, provider, signer }) => {
       return;
     }
 
+    if (isNftContract && (!nftName || !nftDescription || !nftImage)) {
+      alert('Please enter NFT name, description, and upload an image.');
+      return;
+    }
+
     setDeploying(true);
 
     try {
@@ -113,6 +118,10 @@ const Deployer = ({ contract, provider, signer }) => {
         contractInstance = await factory.deploy(tokenName, tokenSymbol, totalSupply);
       } else if (hasGoalAndDuration) {
         contractInstance = await factory.deploy(goal, duration);
+      } else if (isNftContract) {
+        // In a real-world scenario, you would need to upload the image to a service like IPFS and get the URL
+        const tokenURI = `ipfs://your-ipfs-hash`; // Replace with actual IPFS URL after upload
+        contractInstance = await factory.deploy(nftName, tokenSymbol, tokenURI);
       } else {
         contractInstance = await factory.deploy();
       }
@@ -189,6 +198,39 @@ const Deployer = ({ contract, provider, signer }) => {
               onChange={(e) => setTotalSupply(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
               placeholder="Enter total supply"
+            />
+          </div>
+        </>
+      )}
+
+      {isNftContract && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">NFT Name</label>
+            <input
+              type="text"
+              value={nftName}
+              onChange={(e) => setNftName(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              placeholder="Enter NFT name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">NFT Description</label>
+            <textarea
+              value={nftDescription}
+              onChange={(e) => setNftDescription(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              placeholder="Enter NFT description"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">NFT Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setNftImage(e.target.files[0])}
+              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
             />
           </div>
         </>

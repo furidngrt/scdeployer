@@ -6,6 +6,7 @@ import Deployer from './components/Deployer';
 import Token from './contracts/Token.json';
 import SimpleStorage from './contracts/SimpleStorage.json';
 import Crowdfunding from './contracts/Crowdfunding.json';
+import NFTCreator from './contracts/NFTCreator.json';
 import { ethers } from 'ethers';
 
 const Home = () => {
@@ -13,6 +14,7 @@ const Home = () => {
     { name: 'Token', ...Token },
     { name: 'SimpleStorage', ...SimpleStorage },
     { name: 'Crowdfunding', ...Crowdfunding },
+    { name: 'NFTCreator', ...NFTCreator },
   ];
 
   const [selectedContract, setSelectedContract] = useState(null);
