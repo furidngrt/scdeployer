@@ -202,6 +202,16 @@ const Home = () => {
         <p className="text-xs text-gray-600">
           &copy; {new Date().getFullYear()} Smart Contract Deployer. All rights reserved.
         </p>
+        <p className="text-xs text-gray-600">
+          <a 
+            href="https://github.com/furidngrt/smartcontract-deployer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            View Source Code on GitHub
+          </a>
+        </p>
       </footer>
     </div>
   );
