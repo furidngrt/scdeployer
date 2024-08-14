@@ -12,11 +12,13 @@ const Deployer = ({ contract, provider, signer }) => {
   const [nftName, setNftName] = useState('');
   const [nftDescription, setNftDescription] = useState('');
   const [nftImage, setNftImage] = useState(null);
+  const [daoTokenAddress, setDaoTokenAddress] = useState('');
   const [networkName, setNetworkName] = useState('');
   const [explorerLink, setExplorerLink] = useState('');
   const [hasGoalAndDuration, setHasGoalAndDuration] = useState(false);
   const [isTokenContract, setIsTokenContract] = useState(false);
   const [isNftContract, setIsNftContract] = useState(false);
+  const [isDaoContract, setIsDaoContract] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -38,14 +40,19 @@ const Deployer = ({ contract, provider, signer }) => {
       const isNft = contract.abi.some(
         (item) => item.name === 'createNFT' && item.inputs.some((input) => input.name === 'tokenURI')
       );
+      const isDao = contract.abi.some(
+        (item) => item.type === 'constructor' && item.inputs.some((input) => input.name === '_governanceToken')
+      );
 
       setHasGoalAndDuration(hasGoal && hasDuration);
       setIsTokenContract(isToken);
       setIsNftContract(isNft);
+      setIsDaoContract(isDao);
     } else {
       setHasGoalAndDuration(false);
       setIsTokenContract(false);
       setIsNftContract(false);
+      setIsDaoContract(false);
     }
 
     if (provider) {
@@ -56,7 +63,7 @@ const Deployer = ({ contract, provider, signer }) => {
         const networkNameLower = network.name.toLowerCase();
 
         switch (networkNameLower) {
-          case 'homestead': // Mainnet
+          case 'homestead': 
             explorerUrl = 'https://etherscan.io/address/';
             break;
           case 'ropsten':
@@ -108,6 +115,11 @@ const Deployer = ({ contract, provider, signer }) => {
       return;
     }
 
+    if (isDaoContract && !daoTokenAddress) {
+      alert('Please enter the governance token address.');
+      return;
+    }
+
     setDeploying(true);
 
     try {
@@ -119,9 +131,10 @@ const Deployer = ({ contract, provider, signer }) => {
       } else if (hasGoalAndDuration) {
         contractInstance = await factory.deploy(goal, duration);
       } else if (isNftContract) {
-        // In a real-world scenario, you would need to upload the image to a service like IPFS and get the URL
-        const tokenURI = `ipfs://your-ipfs-hash`; // Replace with actual IPFS URL after upload
+        const tokenURI = `ipfs://your-ipfs-hash`; 
         contractInstance = await factory.deploy(nftName, tokenSymbol, tokenURI);
+      } else if (isDaoContract) {
+        contractInstance = await factory.deploy(daoTokenAddress);
       } else {
         contractInstance = await factory.deploy();
       }
@@ -132,8 +145,6 @@ const Deployer = ({ contract, provider, signer }) => {
       alert(`Contract deployed at address: ${contractInstance.address} on ${networkName}`);
     } catch (error) {
       console.error("Deployment failed with error:", error);
-      
-      // Display the specific error message
       setErrorMessage(error.message);
       setShowErrorPopup(true);
     } finally {
@@ -144,39 +155,39 @@ const Deployer = ({ contract, provider, signer }) => {
   return (
     <div className="relative p-4 bg-white rounded-xl shadow-md space-y-4">
       {hasGoalAndDuration && (
-        <>
-          <div>
+        <div className="flex space-x-4">
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700">Goal</label>
             <input
               type="number"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter goal amount"
             />
           </div>
-          <div>
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700">Duration</label>
             <input
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter duration in seconds"
             />
           </div>
-        </>
+        </div>
       )}
 
       {isTokenContract && (
-        <>
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Token Name</label>
             <input
               type="text"
               value={tokenName}
               onChange={(e) => setTokenName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter token name"
             />
           </div>
@@ -186,7 +197,7 @@ const Deployer = ({ contract, provider, signer }) => {
               type="text"
               value={tokenSymbol}
               onChange={(e) => setTokenSymbol(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter token symbol"
             />
           </div>
@@ -196,22 +207,22 @@ const Deployer = ({ contract, provider, signer }) => {
               type="number"
               value={totalSupply}
               onChange={(e) => setTotalSupply(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter total supply"
             />
           </div>
-        </>
+        </div>
       )}
 
       {isNftContract && (
-        <>
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">NFT Name</label>
             <input
               type="text"
               value={nftName}
               onChange={(e) => setNftName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter NFT name"
             />
           </div>
@@ -220,7 +231,7 @@ const Deployer = ({ contract, provider, signer }) => {
             <textarea
               value={nftDescription}
               onChange={(e) => setNftDescription(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
               placeholder="Enter NFT description"
             />
           </div>
@@ -230,21 +241,34 @@ const Deployer = ({ contract, provider, signer }) => {
               type="file"
               accept="image/*"
               onChange={(e) => setNftImage(e.target.files[0])}
-              className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black bg-gray-100"
+              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
             />
           </div>
-        </>
+        </div>
+      )}
+
+      {isDaoContract && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Governance Token Address</label>
+          <input
+            type="text"
+            value={daoTokenAddress}
+            onChange={(e) => setDaoTokenAddress(e.target.value)}
+            className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+            placeholder="Enter governance token address"
+          />
+        </div>
       )}
 
       <button
         onClick={deployContract}
         disabled={deploying || !contract || !contract.bytecode}
-        className={`w-full py-2 px-4 bg-blue-200 text-blue-900 rounded-lg text-sm font-semibold transition-transform transform hover:scale-105 shadow-md flex justify-center items-center`}
+        className="w-full mt-6 py-2 px-4 bg-blue-500 text-white rounded-full hover:bg-blue-600 flex items-center justify-center"
       >
         {deploying ? (
           <>
             <svg
-              className="animate-spin h-4 w-4 text-blue-900 mr-2"
+              className="animate-spin h-5 w-5 text-white mr-2"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -289,18 +313,15 @@ const Deployer = ({ contract, provider, signer }) => {
       )}
 
       {showErrorPopup && (
-        <div className="absolute top-0 left-0 right-0 flex justify-center p-4">
-          <div className="bg-red-200 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Error: </strong>
-            <span className="block sm:inline">{errorMessage}</span>
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold text-red-700">Error</h3>
+            <p className="text-sm text-gray-700">{errorMessage}</p>
             <button
               onClick={() => setShowErrorPopup(false)}
-              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+              className="mt-4 w-full py-2 px-4 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600"
             >
-              <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <title>Close</title>
-                <path d="M14.348 5.652a.5.5 0 00-.708 0L10 9.293 6.36 5.652a.5.5 0 00-.707.708l3.64 3.64-3.64 3.64a.5.5 0 00.707.707l3.64-3.64 3.64 3.64a.5.5 0 00.708-.707l-3.64-3.64 3.64-3.64a.5.5 0 000-.708z" />
-              </svg>
+              OK
             </button>
           </div>
         </div>
