@@ -1,3 +1,4 @@
+import { DarkModeProvider } from './components/DarkModeContext';
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -18,7 +19,11 @@ export default function RootLayout({ children }) {
         <meta name="robots" content="index, follow" />
         <link rel="icon" href="https://i.ibb.co.com/1mHFrTn/logo.png" type="image/x-icon" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <DarkModeProvider>
+          {children}
+        </DarkModeProvider>
+      </body>
     </html>
   );
 }

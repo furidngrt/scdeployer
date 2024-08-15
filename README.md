@@ -3,12 +3,12 @@ This project provides a user-friendly interface for deploying smart contracts on
 
 
 #### Purpose:
-This project is intended for educational purposes, allowing developers to learn how to interact with the Ethereum blockchain and deploy smart contracts using React and Ethers.js. It serves as a practical example for understanding blockchain concepts, MetaMask integration, and smart contract development.
+This project is intended for educational purposes, to learn how to interact with the Ethereum blockchain and deploy smart contracts using React and Ethers.js. It serves as a practical example for understanding blockchain concepts, MetaMask integration, and smart contract development.
 
 #### Getting Started:
 - Clone the repository.
 - Install dependencies using `npm install`.
-- Start the development server with `npm start`.
+- Start the development server with `npm start`
 - Connect your MetaMask wallet and start deploying contracts!
 
 #### Technologies Used:

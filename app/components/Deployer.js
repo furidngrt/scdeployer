@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import React, { useState, useEffect, useContext } from 'react';
 import { ethers } from 'ethers';
+import { DarkModeContext } from './DarkModeContext';
 
 const Deployer = ({ contract, provider, signer }) => {
+  const { isDarkMode } = useContext(DarkModeContext);
   const [deploying, setDeploying] = useState(false);
   const [contractAddress, setContractAddress] = useState('');
   const [goal, setGoal] = useState('');
@@ -13,8 +17,6 @@ const Deployer = ({ contract, provider, signer }) => {
   const [nftDescription, setNftDescription] = useState('');
   const [nftImage, setNftImage] = useState(null);
   const [daoTokenAddress, setDaoTokenAddress] = useState('');
-  const [networkName, setNetworkName] = useState('');
-  const [explorerLink, setExplorerLink] = useState('');
   const [hasGoalAndDuration, setHasGoalAndDuration] = useState(false);
   const [isTokenContract, setIsTokenContract] = useState(false);
   const [isNftContract, setIsNftContract] = useState(false);
@@ -54,38 +56,7 @@ const Deployer = ({ contract, provider, signer }) => {
       setIsNftContract(false);
       setIsDaoContract(false);
     }
-
-    if (provider) {
-      provider.getNetwork().then((network) => {
-        setNetworkName(network.name);
-
-        let explorerUrl;
-        const networkNameLower = network.name.toLowerCase();
-
-        switch (networkNameLower) {
-          case 'homestead': 
-            explorerUrl = 'https://etherscan.io/address/';
-            break;
-          case 'ropsten':
-            explorerUrl = 'https://ropsten.etherscan.io/address/';
-            break;
-          case 'rinkeby':
-            explorerUrl = 'https://rinkeby.etherscan.io/address/';
-            break;
-          case 'sepolia':
-            explorerUrl = 'https://sepolia.etherscan.io/address/';
-            break;
-          case 'kovan':
-            explorerUrl = 'https://kovan.etherscan.io/address/';
-            break;
-          default:
-            explorerUrl = `https://${networkNameLower}.etherscan.io/address/`;
-        }
-
-        setExplorerLink(explorerUrl);
-      });
-    }
-  }, [contract, provider]);
+  }, [contract]);
 
   const deployContract = async () => {
     if (!provider) {
@@ -95,8 +66,6 @@ const Deployer = ({ contract, provider, signer }) => {
 
     if (!signer || !contract || !contract.bytecode) {
       alert('Signer, contract data, or bytecode is missing.');
-      console.log('Signer:', signer);
-      console.log('Contract:', contract);
       return;
     }
 
@@ -142,10 +111,14 @@ const Deployer = ({ contract, provider, signer }) => {
       await contractInstance.deployed();
 
       setContractAddress(contractInstance.address);
-      alert(`Contract deployed at address: ${contractInstance.address} on ${networkName}`);
+      alert(`Contract deployed at address: ${contractInstance.address}`);
     } catch (error) {
       console.error("Deployment failed with error:", error);
-      setErrorMessage(error.message);
+      if (error.code === 4001) { // User rejected MetaMask request
+        setErrorMessage("You rejected the MetaMask request. Please try again.");
+      } else {
+        setErrorMessage(error.message.length > 200 ? `${error.message.substring(0, 200)}...` : error.message);
+      }
       setShowErrorPopup(true);
     } finally {
       setDeploying(false);
@@ -153,26 +126,27 @@ const Deployer = ({ contract, provider, signer }) => {
   };
 
   return (
-    <div className="relative p-4 bg-white rounded-xl shadow-md space-y-4">
+    <div className={`relative p-4 ${isDarkMode ? 'bg-[#252a34] text-gray-100' : 'bg-white text-gray-800'} rounded-xl shadow-md space-y-4`}>
+      {/* Conditional inputs based on contract type */}
       {hasGoalAndDuration && (
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700">Goal</label>
+        <div className="space-y-4">
+          <div>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Goal</label>
             <input
               type="number"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter goal amount"
             />
           </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700">Duration</label>
+          <div>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Duration</label>
             <input
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter duration in seconds"
             />
           </div>
@@ -182,32 +156,32 @@ const Deployer = ({ contract, provider, signer }) => {
       {isTokenContract && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Token Name</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Token Name</label>
             <input
               type="text"
               value={tokenName}
               onChange={(e) => setTokenName(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter token name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Token Symbol</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Token Symbol</label>
             <input
               type="text"
               value={tokenSymbol}
               onChange={(e) => setTokenSymbol(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter token symbol"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Total Supply</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Total Supply</label>
             <input
               type="number"
               value={totalSupply}
               onChange={(e) => setTotalSupply(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter total supply"
             />
           </div>
@@ -217,31 +191,31 @@ const Deployer = ({ contract, provider, signer }) => {
       {isNftContract && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">NFT Name</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>NFT Name</label>
             <input
               type="text"
               value={nftName}
               onChange={(e) => setNftName(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter NFT name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">NFT Description</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>NFT Description</label>
             <textarea
               value={nftDescription}
               onChange={(e) => setNftDescription(e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
               placeholder="Enter NFT description"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">NFT Image</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>NFT Image</label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setNftImage(e.target.files[0])}
-              className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+              className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
             />
           </div>
         </div>
@@ -249,12 +223,12 @@ const Deployer = ({ contract, provider, signer }) => {
 
       {isDaoContract && (
         <div>
-          <label className="block text-sm font-medium text-gray-700">Governance Token Address</label>
+          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Governance Token Address</label>
           <input
             type="text"
             value={daoTokenAddress}
             onChange={(e) => setDaoTokenAddress(e.target.value)}
-            className="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-800"
+            className={`mt-1 block w-full px-4 py-2 border ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-300'} rounded-lg`}
             placeholder="Enter governance token address"
           />
         </div>
@@ -263,7 +237,7 @@ const Deployer = ({ contract, provider, signer }) => {
       <button
         onClick={deployContract}
         disabled={deploying || !contract || !contract.bytecode}
-        className="w-full mt-6 py-2 px-4 bg-blue-500 text-white rounded-full hover:bg-blue-600 flex items-center justify-center"
+        className={`w-full mt-6 py-2 px-4 ${isDarkMode ? 'bg-[#3f72af] text-gray-100 hover:bg-[#2c5a9f]' : 'bg-blue-500 text-white hover:bg-blue-600'} rounded-full flex items-center justify-center`}
       >
         {deploying ? (
           <>
@@ -295,31 +269,26 @@ const Deployer = ({ contract, provider, signer }) => {
       </button>
 
       {contractAddress && (
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-          <h3 className="text-sm font-semibold text-gray-800">Contract Deployed!</h3>
-          <p className="text-gray-700 break-words text-sm">
-            The contract has been deployed at:{" "}
-            <a
-              href={`${explorerLink}${contractAddress}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              {contractAddress}
-            </a>{" "}
-            on {networkName}
+        <div className={`mt-4 p-4 ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100' : 'bg-gray-100 text-gray-800'} rounded-lg`}>
+          <h3 className="text-sm font-semibold">
+            The contract has been deployed at:
+          </h3>
+          <p className="break-words text-sm">
+            {contractAddress}
           </p>
         </div>
       )}
 
       {showErrorPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold text-red-700">Error</h3>
-            <p className="text-sm text-gray-700">{errorMessage}</p>
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+          <div className={`bg-white ${isDarkMode ? 'bg-[#252a34] text-gray-100' : 'bg-white text-gray-800'} p-4 rounded-lg shadow-lg max-w-md w-full`}>
+            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-red-500' : 'text-red-700'}`}>Error</h3>
+            <p className="text-sm break-words">
+              {errorMessage}
+            </p>
             <button
               onClick={() => setShowErrorPopup(false)}
-              className="mt-4 w-full py-2 px-4 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600"
+              className={`mt-4 w-full py-2 px-4 ${isDarkMode ? 'bg-red-700 text-gray-100 hover:bg-red-800' : 'bg-red-500 text-white hover:bg-red-600'} rounded-lg shadow-md`}
             >
               OK
             </button>
