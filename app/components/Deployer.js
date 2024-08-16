@@ -268,12 +268,16 @@ const Deployer = ({ contract, provider, signer }) => {
   function renderErrorPopup() {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-        <div className={`bg-white ${isDarkMode ? 'bg-[#252a34] text-gray-100' : 'bg-white text-gray-800'} p-4 rounded-lg shadow-lg max-w-md w-full`}>
-          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-red-500' : 'text-red-700'}`}>Error</h3>
-          <p className="text-sm break-words">{errorMessage}</p>
+        <div className={`p-4 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'bg-[#252a34] text-gray-100' : 'bg-white text-gray-800'}`}>
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-700'}`}>
+            Error
+          </h3>
+          <p className="text-sm break-words">
+            {errorMessage}
+          </p>
           <button
             onClick={() => setShowErrorPopup(false)}
-            className={`mt-4 w-full py-2 px-4 ${isDarkMode ? 'bg-red-700 text-gray-100 hover:bg-red-800' : 'bg-red-500 text-white hover:bg-red-600'} rounded-lg shadow-md`}
+            className={`mt-4 w-full py-2 px-4 rounded-lg shadow-md transition-colors duration-300 ${isDarkMode ? 'bg-red-600 text-gray-100 hover:bg-red-700' : 'bg-red-500 text-white hover:bg-red-600'}`}
           >
             OK
           </button>
