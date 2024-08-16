@@ -15,7 +15,7 @@ const ContractSelector = ({ contracts, onSelect }) => {
 
   return (
     <div className={`p-4 ${isDarkMode ? 'bg-[#252a34] text-gray-100' : 'bg-white text-gray-800'} rounded-lg shadow-md max-w-md mx-auto space-y-3 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-      <h3 className="text-xl font-medium">
+      <h3 className="text-xl font-semibold">
         Select a Smart Contract
       </h3>
 
@@ -23,10 +23,9 @@ const ContractSelector = ({ contracts, onSelect }) => {
         <select
           value={selectedContract}
           onChange={handleChange}
-          className={`w-full ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100' : 'bg-gray-100 text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg block py-2 px-2 cursor-pointer appearance-none`}
-          style={{ zIndex: 1000, position: 'relative' }}
+          className={`w-full ${isDarkMode ? 'bg-[#1a1a2e] text-gray-100' : 'bg-gray-100 text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg py-2 px-3 cursor-pointer appearance-none focus:outline-none focus:ring-2 ${isDarkMode ? 'focus:ring-[#4b6daa]' : 'focus:ring-blue-500'}`}
         >
-          <option value="">Select a contract</option>
+          <option value="" disabled>Select a contract</option>
           {contracts.map((contract, index) => (
             <option key={index} value={index}>
               {contract.name}
