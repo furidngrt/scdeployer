@@ -4,17 +4,19 @@ import React, { useState, useEffect, useContext } from 'react';
 import { DarkModeContext } from './components/DarkModeContext';
 import ContractSelector from './components/ContractSelector';
 import Deployer from './components/Deployer';
+import { ethers } from 'ethers';
+import { FaGithub, FaHeart, FaTwitter, FaMedium, FaFacebook, FaReddit } from 'react-icons/fa';
+import Link from 'next/link';
+
 import Token from './contracts/Token.json';
 import SimpleStorage from './contracts/SimpleStorage.json';
 import Crowdfunding from './contracts/Crowdfunding.json';
 import NFTCreator from './contracts/NFTCreator.json';
 import DAO from './contracts/DAO.json';
-import { ethers } from 'ethers';
-import { FaGithub, FaHeart, FaArrowUp, FaTwitter, FaMedium, FaFacebook, FaReddit } from 'react-icons/fa'; // Impor ikon
-import Link from 'next/link'; // Import untuk navigasi
 
 const Home = () => {
   const { isDarkMode, setIsDarkMode } = useContext(DarkModeContext);
+
   const contracts = [
     { name: 'Token', ...Token },
     { name: 'SimpleStorage', ...SimpleStorage },
@@ -56,9 +58,7 @@ const Home = () => {
 
   const connectWallet = async () => {
     try {
-      if (!window.ethereum) {
-        throw new Error('MetaMask is not installed');
-      }
+      if (!window.ethereum) throw new Error('MetaMask is not installed');
 
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -94,11 +94,7 @@ const Home = () => {
   };
 
   const handleScroll = () => {
-    if (window.scrollY > 200) {
-      setShowScrollToTop(true);
-    } else {
-      setShowScrollToTop(false);
-    }
+    setShowScrollToTop(window.scrollY > 200);
   };
 
   const scrollToTop = () => {
@@ -106,8 +102,7 @@ const Home = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-[#1a1a2e] transition-colors duration-500' : 'bg-[#f4f5f6] transition-colors duration-500'} flex flex-col items-center`}>
-      {/* Navbar */}
+    <div className={`min-h-screen ${isDarkMode ? 'bg-[#1a1a2e]' : 'bg-[#f4f5f6]'} transition-colors duration-500 flex flex-col items-center`}>
       <header
         className={`w-full flex justify-between items-center py-4 px-4 border-b ${isDarkMode ? 'border-[#252a34]' : 'border-gray-300'}`}
         style={{ backgroundColor: isDarkMode ? '#252a34' : '#f4f5f6' }}
@@ -119,36 +114,25 @@ const Home = () => {
             className="h-8 w-8 rounded-full" 
           />
           <nav className="flex space-x-4 text-gray-800">
-            <a 
-              href="#" 
-              className={`hover:text-gray-100 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
-              style={{
-                fontFamily: '"Inter Variable", -apple-system, system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-                fontSize: '14px',
-                lineHeight: '20px',
-                textAlign: 'start',
-                letterSpacing: 'normal',
-              }}
-            >
-              HOME
-            </a>
-            <Link 
-              href="/about" 
-              className={`hover:text-gray-100 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
-              style={{
-                fontFamily: '"Inter Variable", -apple-system, system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-                fontSize: '14px',
-                lineHeight: '20px',
-                textAlign: 'start',
-                letterSpacing: 'normal',
-              }}
-            >
-              ABOUT
+            <Link href="/">
+              <a 
+                className={`hover:text-gray-100 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
+                style={linkStyle}
+              >
+                HOME
+              </a>
+            </Link>
+            <Link href="/about">
+              <a 
+                className={`hover:text-gray-100 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
+                style={linkStyle}
+              >
+                ABOUT
+              </a>
             </Link>
           </nav>
         </div>
         <div className="flex items-center space-x-2">
-          {/* Dark Mode Toggle */}
           <div
             className={`flex items-center cursor-pointer p-1 ${isDarkMode ? 'bg-[#3f72af]' : 'bg-gray-300'} rounded-full`}
             onClick={toggleDarkMode}
@@ -157,37 +141,7 @@ const Home = () => {
             <div
               className={`flex justify-center items-center w-5 h-5 rounded-full transition-transform transform ${isDarkMode ? 'translate-x-4 bg-gray-100' : 'translate-x-0 bg-blue-500'}`}
             >
-              {isDarkMode ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="text-gray-800 w-3 h-3"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-7.364l-.707-.707M6.343 18.343l-.707-.707m12.728 0l.707-.707M6.343 5.657l-.707-.707M15 12a3 3 0 01-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="text-gray-100 w-3 h-3"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-7.364l-.707-.707M6.343 18.343l-.707-.707m12.728 0l.707-.707M6.343 5.657l-.707-.707M15 12a3 3 0 01-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              )}
+              {isDarkMode ? <SunIcon /> : <MoonIcon />}
             </div>
           </div>
           {userAddress ? (
@@ -201,7 +155,6 @@ const Home = () => {
               {showDropdown && (
                 <div
                   className={`absolute right-0 mt-2 py-2 w-36 rounded-lg shadow-xl border ${isDarkMode ? 'bg-[#252a34] border-gray-700' : 'bg-white border-gray-300'}`}
-                  style={{ right: '0', transform: 'translateX(0)' }}
                 >
                   <button
                     onClick={disconnectWallet}
@@ -223,9 +176,10 @@ const Home = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className={`w-full max-w-lg mt-6 p-6 ${isDarkMode ? 'bg-[#252a34]' : 'bg-white'} rounded-lg shadow-lg`}>
-        <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4 text-center`}>Smart Contract Deployer</h2>
+        <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4 text-center`}>
+          Smart Contract Deployer
+        </h2>
 
         <div className="space-y-6">
           <div className="w-full mx-auto">
@@ -253,23 +207,13 @@ const Home = () => {
         </div>
       </main>
 
-      {/* Social Media Icons */}
       <div className="flex justify-center space-x-4 mt-6 mb-4">
-        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-          <FaTwitter className={`text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`} />
-        </a>
-        <a href="https://medium.com" target="_blank" rel="noopener noreferrer">
-          <FaMedium className={`text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`} />
-        </a>
-        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-          <FaFacebook className={`text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`} />
-        </a>
-        <a href="https://reddit.com" target="_blank" rel="noopener noreferrer">
-          <FaReddit className={`text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`} />
-        </a>
+        <SocialMediaLink href="https://twitter.com" icon={<FaTwitter />} isDarkMode={isDarkMode} />
+        <SocialMediaLink href="https://medium.com" icon={<FaMedium />} isDarkMode={isDarkMode} />
+        <SocialMediaLink href="https://facebook.com" icon={<FaFacebook />} isDarkMode={isDarkMode} />
+        <SocialMediaLink href="https://reddit.com" icon={<FaReddit />} isDarkMode={isDarkMode} />
       </div>
 
-      {/* Footer */}
       <footer className="w-full max-w-lg text-center py-4 mt-6">
         <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           <a 
@@ -299,5 +243,33 @@ const Home = () => {
     </div>
   );
 };
+
+const linkStyle = {
+  fontFamily: '"Inter Variable", -apple-system, system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+  fontSize: '14px',
+  lineHeight: '20px',
+  textAlign: 'start',
+  letterSpacing: 'normal',
+};
+
+const SunIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-800 w-3 h-3">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-7.364l-.707-.707M6.343 18.343l-.707-.707m12.728 0l.707-.707M6.343 5.657l-.707-.707M15 12a3 3 0 01-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const MoonIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-100 w-3 h-3">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-7.364l-.707-.707M6.343 18.343l-.707-.707m12.728 0l.707-.707M6.343 5.657l-.707-.707M15 12a3 3 0 01-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const SocialMediaLink = ({ href, icon, isDarkMode }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer">
+    <div className={`text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+      {icon}
+    </div>
+  </a>
+);
 
 export default Home;
