@@ -13,6 +13,7 @@ import SimpleStorage from './contracts/SimpleStorage.json';
 import Crowdfunding from './contracts/Crowdfunding.json';
 import NFTCreator from './contracts/NFTCreator.json';
 import DAO from './contracts/DAO.json';
+import ComplexStakingToken from './contracts/ComplexStakingToken.json';
 
 const Home = () => {
   const { isDarkMode, setIsDarkMode } = useContext(DarkModeContext);
@@ -23,6 +24,7 @@ const Home = () => {
     { name: 'Crowdfunding', ...Crowdfunding },
     { name: 'NFTCreator', ...NFTCreator },
     { name: 'DAO', ...DAO },
+    { name: 'ComplexStakingToken', ...ComplexStakingToken },
   ];
 
   const [selectedContract, setSelectedContract] = useState(null);
